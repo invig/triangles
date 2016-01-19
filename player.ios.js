@@ -8,12 +8,22 @@ var {
 	TouchableHighlight
 } = React;
 
+var AudioPlayer = require('react-native').NativeModules.AudioPlayer;
 
 var Player = React.createClass({
+  getInitialState: function() {
+    return {
+      loaded: false,
+      episode: null
+    }
+  },
+  componentDidMount: function() {
+    AudioPlayer.initWithURL(this.props.url);
+  },
   render: function() {
     return (
       <View style={styles.player}>
-        <Text style={styles.playerText}> Player </Text>
+        <Text style={styles.playerText}>Play file at url: {this.props.url}</Text>
       </View>
       );
   }

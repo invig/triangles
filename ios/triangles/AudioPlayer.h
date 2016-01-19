@@ -7,8 +7,11 @@
 //
 
 #import "RCTBridgeModule.h"
-#import <AVFoundation/AVFoundation.h>;
+#import <AVFoundation/AVFoundation.h>
 
 @interface AudioPlayer : NSObject <RCTBridgeModule>
+
+@property (strong) AVPlayer * player;
+@property (strong) AVPlayerItem * item;
 
 @end
