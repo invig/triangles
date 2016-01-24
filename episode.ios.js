@@ -14,7 +14,6 @@ var Episode = React.createClass({
 		return (
 			<View style={styles.episode}>
         <Text style={styles.episodeText}>{this.props.episodeData.title}</Text>
-        <Player url={this.props.episodeData.url} />
 			</View>
 		);
 	}
