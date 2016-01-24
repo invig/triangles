@@ -6,73 +6,47 @@ var {
 	View,
 	Image,
 	TouchableHighlight,
+	NativeModules,
   NativeAppEventEmitter
 } = React;
 
-// TODO: Try an get Xcode to pass down some more information about playing status....
+var { AudioPlayer } = NativeModules;
 
-var Player = React.createClass({
-	//TODO: Listen to notifications of playing state change.
-	//this.props.setPlaying(Boolean(event.nativeEvent.playingState));
-	var audioPlayer = require('react-native').NativeModules.AudioPlayer;
-	var subscription = NativeAppEventEmitter.addListener(
-		'PlayerEvent',
-		(event) => console.log(event.name)
-	);
+// TODO: Background audio
 
-	getInitialState: function () {
-		return {
+class Player extends React.Component {
+	constructor(props) {
+		super(props);
+
+		var listener = NativeAppEventEmitter.addListener(
+			'PlayerEvent', (event) => this.processEvents(event)
+		);
+
+		this.state = {
 			loaded : false,
 			loadedUrl: null
-		};
-	},
+		}
+	}
 
-	// Is iOS already playing a file when we loaded?
-  componentDidMount: function() {
-    audioPlayer.isPlaying((playing) => {
-      console.log(playing);
-      if (playing == true) {
-        console.log('already playing');
-				audioPlayer.loadedUrl((url) => {
-					console.log('Loaded URL is: ' + url);
-					this.setState({loadedUrl : url});
-				});
-      } else {
-        console.log('loading new file');
-        audioPlayer.initWithURL(this.props.episode.url);
-      }
-      this.setState({loaded: true});
-			if (this.props.setPlaying) {
-				this.props.setPlaying(playing);
-			}
-    });
-  },
-
-
-  pressedPlay:function() {
-    console.log('play');
-    audioPlayer.play();
-		audioPlayer.loadedUrl((url) => {
-			console.log('Loaded URL is: ' + url);
-			this.setState({loadedUrl : url});
-		});
-  },
-
-	pressedPause:function() {
-		console.log('pause');
-		audioPlayer.pause();
-	},
-
-
-  render: function() {
-		// If we've selected a different episode. Play it!
-		if (this.props.episode.url !== this.state.loadedUrl) {
-			audioPlayer.initWithURL(this.props.episode.url);
+	processEvents(event) {
+		if (event.hasOwnProperty('playingState')) {
+			this.props.setPlaying(event.playingState);
 		}
 
-    console.log('Player render');
-    console.log(this.state);
-    console.log(this.props.playing);
+		if (event.hasOwnProperty('loadedState')) {
+			this.setState({loaded: Boolean(event.loadedState), loadedUrl: event.playingUrl});
+		}
+	}
+
+  render () {
+		// If we've selected a different episode. Play it!
+		console.log('Player render ....  playing? ' + this.props.playing);
+
+		AudioPlayer.loadedUrl((url) => {
+			if (this.props.episode.url !== url) {
+				AudioPlayer.initWithURL(this.props.episode.url);
+			}
+		});
 
 		if (! this.state.loaded) {
       return (
@@ -82,31 +56,36 @@ var Player = React.createClass({
         );
     } else {
 			if (this.props.playing) {
-				<View style={styles.player}>
-					<TouchableHighlight
-						underlayColor="#aaa"
-						activeOpacity={0.8}
-						onPress={() => this.pressedPause()}
-					>
-						<Text style={styles.playerText}>Pause</Text>
-					</TouchableHighlight>
-				</View>
+				return (
+					<View style={styles.player}>
+					<Text style={styles.playerText}>{this.props.episode.title}</Text>
+						<TouchableHighlight
+							underlayColor="#aaa"
+							activeOpacity={0.8}
+							onPress={() => AudioPlayer.pause()}
+						>
+							<Text style={[styles.button, styles.pauseButton]}>Pause</Text>
+						</TouchableHighlight>
+					</View>
+				);
 			} else {
 				return (
 	        <View style={styles.player}>
-	          <TouchableHighlight
-	            underlayColor="#aaa"
-	            activeOpacity={0.8}
-	            onPress={() => this.pressedPlay()}
-	          >
-	            <Text style={styles.playerText}>Play file at url: {this.props.episode.url}</Text>
-	          </TouchableHighlight>
+						<Text style={styles.playerText}>{this.props.episode.title}</Text>
+						<TouchableHighlight
+							underlayColor="#aaa"
+							activeOpacity={0.8}
+							onPress={() => AudioPlayer.play()}
+						>
+							<Text style={[styles.button, styles.playButton]}>Play</Text>
+						</TouchableHighlight>
+
 	        </View>
 	        );
 			}
     }
   }
-});
+}
 
 var styles = StyleSheet.create({
   player: {
@@ -114,10 +93,23 @@ var styles = StyleSheet.create({
     padding: 10
   },
   playerText: {
+		padding: 20,
     textAlign: 'center',
     color: '#333',
     fontSize: 30,
-  }
+  },
+	button: {
+		padding:20,
+		textAlign: 'center',
+		color: '#333',
+		fontSize: 30,
+	},
+	playButton: {
+		backgroundColor: '#009a49'
+	},
+	pauseButton: {
+		backgroundColor: '#eee'		
+	}
 });
 
 module.exports = Player;

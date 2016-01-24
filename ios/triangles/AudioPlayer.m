@@ -40,8 +40,16 @@ RCT_EXPORT_METHOD(initWithURL:(NSString *)fileUrl) {
   NSLog(@"Init with URL: %@", fileUrl);
   
   if (! fileUrl || fileUrl.length < 1 ) {
-    return;
+    NSDictionary *event =
+    @{
+      @"loadedtSate" : @(FALSE),
+      @"playingUrl" : self.url
+      };
+    
+    [self.bridge.eventDispatcher sendAppEventWithName:@"PlayerEvent" body:event];
+  
   } else {
+    
     self.item = [[AVPlayerItem alloc] initWithURL:[NSURL URLWithString:fileUrl]];
     self.player = [AVPlayer playerWithPlayerItem:self.item];
     self.isPlaying = NO;
@@ -49,6 +57,15 @@ RCT_EXPORT_METHOD(initWithURL:(NSString *)fileUrl) {
     
     [[NSNotificationCenter defaultCenter]
      addObserver:self selector:@selector(playerFinished:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.item];
+    
+    
+    NSDictionary *event =
+    @{
+      @"loadedState" : @(TRUE),
+      @"playingUrl" : self.url
+      };
+    
+    [self.bridge.eventDispatcher sendAppEventWithName:@"PlayerEvent" body:event];
   }
 }
 
@@ -59,6 +76,8 @@ RCT_EXPORT_METHOD(isPlaying:(RCTResponseSenderBlock)callback) {
 RCT_EXPORT_METHOD(loadedUrl:(RCTResponseSenderBlock)callback) {
   if (self.url) {
     callback(@[self.url]);
+  } else {
+    callback(@[]);
   }
 }
 
@@ -74,6 +93,8 @@ RCT_EXPORT_METHOD(loadedUrl:(RCTResponseSenderBlock)callback) {
       };
     
     [self.bridge.eventDispatcher sendAppEventWithName:@"PlayerEvent" body:event];
+    
+    NSLog(@"SEND EVENT: %@", event);
   }
 }
 
@@ -93,6 +114,7 @@ RCT_EXPORT_METHOD(play){
 
 RCT_EXPORT_METHOD(pause){
   [self.player pause];
+  self.isPlaying = NO;
 }
 
 RCT_EXPORT_METHOD(currentTime:(RCTResponseSenderBlock)callback) {

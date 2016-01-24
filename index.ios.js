@@ -52,14 +52,18 @@ var triangles = React.createClass({
 	},
 
   getInitialState: function() {
+    // TODO: Find background audio and playing status?
+    // TODO: Always have the next item playing, never have a non-current episode.
+
     return {
       currentEpisode: {},
       playing: false,
-      selectedTab: 'unplayedPodcasts'
+      selectedTab: 'currentlyPlaying'
     }
   },
 
   setPlaying: function(playing) {
+    console.log('set playing ' + playing);
     this.setState({playing: playing});
   },
 
@@ -95,14 +99,6 @@ var triangles = React.createClass({
     console.log(this.state);
 		return (
       <TabBarIOS>
-        <TabBarIOS.Item
-          title="Unplayed"
-          selected={this.state.selectedTab === 'unplayedPodcasts'}
-          onPress={() => {
-          this.setState({selectedTab:'unplayedPodcasts'});
-        }}>
-        {this._renderUnplayedPodcasts(MOCKED_PODCAST_LIST)}
-        </TabBarIOS.Item>
 
         <TabBarIOS.Item
           title="Playing"
@@ -111,6 +107,15 @@ var triangles = React.createClass({
           this.setState({selectedTab:'currentlyPlaying'});
         }}>
         {this._renderCurrentlyPlaying()}
+        </TabBarIOS.Item>
+
+        <TabBarIOS.Item
+          title="Unplayed"
+          selected={this.state.selectedTab === 'unplayedPodcasts'}
+          onPress={() => {
+          this.setState({selectedTab:'unplayedPodcasts'});
+        }}>
+        {this._renderUnplayedPodcasts(MOCKED_PODCAST_LIST)}
         </TabBarIOS.Item>
 
       </TabBarIOS>
