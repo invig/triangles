@@ -23,16 +23,20 @@
 
 RCT_EXPORT_MODULE();
 
-
-- (void)setSharedAudioSessionCategory
-{
-  NSError *categoryError = nil;
-  [[AVAudioSession sharedInstance]
-   setCategory:AVAudioSessionCategoryPlayback
-   error:&categoryError];
-  if (categoryError) {
-    NSLog(@"Error setting category!");
+- (id)init {
+  self = [super init];
+  if (self) {
+    NSLog(@"AUDIO SESSOIN STUFF");
+    NSError *categoryError = nil;
+    [[AVAudioSession sharedInstance]
+     setCategory:AVAudioSessionCategoryPlayback
+     error:&categoryError];
+    if (categoryError) {
+      NSLog(@"Error setting category!");
+    }
   }
+  
+  return self;
 }
 
 
@@ -51,6 +55,14 @@ RCT_EXPORT_METHOD(initWithURL:(NSString *)fileUrl) {
   } else {
     
     self.item = [[AVPlayerItem alloc] initWithURL:[NSURL URLWithString:fileUrl]];
+
+    // Disable any video tracks.
+    for (AVPlayerItemTrack * track in self.item.tracks) {
+      if ([track.assetTrack hasMediaCharacteristic:AVMediaCharacteristicVisual]) {
+        track.enabled = NO;
+      }
+    }
+    
     self.player = [AVPlayer playerWithPlayerItem:self.item];
     self.isPlaying = NO;
     self.url = fileUrl;

@@ -14,48 +14,63 @@ var {
 	View,
 	Image,
 	TouchableHighlight,
-  TabBarIOS
+  TabBarIOS,
+  NativeModules
 } = React;
+
+const base64 = require('./node_modules/base-64/base64.js');
 
 var UnplayedPodcasts = require('./unplayedList.ios.js');
 var Episode = require('./episode.ios.js');
 var Player = require('./player.ios.js');
-
-var MOCKED_PODCAST_LIST = [
-	{
-		id:1,
-		title:'73: My Perfect World',
-		image:'https://triangles.lab82.com/ssl_proxy.php?url=http%3A%2F%2Fturing.cool%2Fcover-art-1400.png',
-		description:'ReactCasts.tv Introducing new open-source tools for the Elixir community Apache Thrift',
-    url: 'http://www.podtrac.com/pts/redirect.mp3/traffic.libsyn.com/connected/Connected_018.mp3'
-	},
-	{
-		id:2,
-		title:'191: Elm and Function Programming with Richard Feldman',
-		image:'https://triangles.lab82.com/ssl_proxy.php?url=http%3A%2F%2Ficebox.5by5.tv%2Fimages%2Fbroadcasts%2F52%2Fcover.jpg',
-		description:'This week we talked about Elm and Functional Programming with Richard Feldman from NoRedInk. Elm labeled itself "the best of functional programming...',
-    url: 'http://fdlyr.co/d/quit/cdn.5by5.tv/audio/broadcasts/quit/2015/quit-082.mp3'
-
-	},
-	{
-		id:3,
-		title:'a16z Podcast: Software is What Distinguishes the Hardware Winners',
-		image:'https://triangles.lab82.com/ssl_proxy.php?url=http%3A%2F%2Fi1.sndcdn.com%2Favatars-000073120599-46q7im-original.jpg',
-		description:'Smartphone components have become a kind of Lego kit for all kinds of consumer technology. Cameras, sensors, and batteries all get mixed and matche...',
-    url: 'http://www.podtrac.com/pts/redirect.mp3/traffic.libsyn.com/upgrade/Upgrade_041.mp3'
-	}
-];
+var { AudioPlayer } = NativeModules;
 
 var triangles = React.createClass({
 	_handleBackButtonPress: function() {
     this.props.navigator.pop();
 	},
 
+  getData: function(url) {
+    // TODO: Store auth data somewhere.
+    // TODO: The server is going to need to be able to tell the app that something else is playing? Maybe?
+
+    var username = '';
+    var password = '';
+    var auth = 'Basic ' +  base64.encode(username + ":" + password);
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': auth
+      }
+    }).then((response) => response.text()).then(
+      (responseText) => {
+      var episodes = JSON.parse(responseText)
+      this.setState({
+        downloadedEpisodeList : true,
+        episodes : episodes.episodes,
+        currentEpisode : episodes.current_episode
+      });
+    })
+    .catch((error) => {
+      console.warn(error);
+    });
+  },
+
   getInitialState: function() {
     // TODO: Find background audio and playing status?
     // TODO: Always have the next item playing, never have a non-current episode.
 
+    // var url = 'http://triangles.dev:8888/episodes/unplayed.json';
+    var url = 'https://triangles.lab82.com/episodes/unplayed.json';
+
+    console.log(this.getData(url));
+
     return {
+      downloadedEpisodeList:false,
+      episodes: {},
       currentEpisode: {},
       playing: false,
       selectedTab: 'currentlyPlaying'
@@ -74,7 +89,7 @@ var triangles = React.createClass({
   _renderCurrentlyPlaying: function() {
     console.log(this.state);
     return(
-      <Player episode={this.state.currentEpisode} playing={this.state.playing} setPlaying={this.setPlaying} />
+      <Player AudioPlayer={AudioPlayer} episode={this.state.currentEpisode} playing={this.state.playing} setPlaying={this.setPlaying} />
     );
   },
 
@@ -86,7 +101,7 @@ var triangles = React.createClass({
           component:UnplayedPodcasts,
           title: 'Unplayed',
           passProps: {
-            episodeList: episodes,
+            episodeList: this.state.episodes,
             selectEpisode: this.selectEpisode
           }
         }}
@@ -97,6 +112,13 @@ var triangles = React.createClass({
 	render: function () {
     console.log("App state: ");
     console.log(this.state);
+
+    if (this.state.downloadedEpisodeList === false) {
+      return (
+        <View><Text style={styles.text}> Loading </Text></View>
+      )
+    }
+
 		return (
       <TabBarIOS>
 
@@ -115,7 +137,7 @@ var triangles = React.createClass({
           onPress={() => {
           this.setState({selectedTab:'unplayedPodcasts'});
         }}>
-        {this._renderUnplayedPodcasts(MOCKED_PODCAST_LIST)}
+        {this._renderUnplayedPodcasts()}
         </TabBarIOS.Item>
 
       </TabBarIOS>
@@ -124,7 +146,6 @@ var triangles = React.createClass({
 });
 
 AppRegistry.registerComponent('triangles', () => triangles);
-
 
 var styles = StyleSheet.create({
 	container: {

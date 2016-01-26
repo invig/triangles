@@ -6,11 +6,9 @@ var {
 	View,
 	Image,
 	TouchableHighlight,
-	NativeModules,
   NativeAppEventEmitter
 } = React;
 
-var { AudioPlayer } = NativeModules;
 
 // TODO: Background audio
 
@@ -42,9 +40,9 @@ class Player extends React.Component {
 		// If we've selected a different episode. Play it!
 		console.log('Player render ....  playing? ' + this.props.playing);
 
-		AudioPlayer.loadedUrl((url) => {
-			if (this.props.episode.url !== url) {
-				AudioPlayer.initWithURL(this.props.episode.url);
+		this.props.AudioPlayer.loadedUrl((url) => {
+			if (this.props.episode.Episode.url !== url) {
+				this.props.AudioPlayer.initWithURL(this.props.episode.Episode.url);
 			}
 		});
 
@@ -58,28 +56,15 @@ class Player extends React.Component {
 			if (this.props.playing) {
 				return (
 					<View style={styles.player}>
-					<Text style={styles.playerText}>{this.props.episode.title}</Text>
-						<TouchableHighlight
-							underlayColor="#aaa"
-							activeOpacity={0.8}
-							onPress={() => AudioPlayer.pause()}
-						>
-							<Text style={[styles.button, styles.pauseButton]}>Pause</Text>
-						</TouchableHighlight>
+						<EpisodeView podcastTitle={this.props.episode.Podcast.title} title={this.props.episode.Episode.title} image={this.props.episode.Podcast.artwork_url} />
+						<PlayerButton buttonText='Pause' buttonAction={this.props.AudioPlayer.pause} />
 					</View>
 				);
 			} else {
 				return (
 	        <View style={styles.player}>
-						<Text style={styles.playerText}>{this.props.episode.title}</Text>
-						<TouchableHighlight
-							underlayColor="#aaa"
-							activeOpacity={0.8}
-							onPress={() => AudioPlayer.play()}
-						>
-							<Text style={[styles.button, styles.playButton]}>Play</Text>
-						</TouchableHighlight>
-
+						<EpisodeView podcastTitle={this.props.episode.Podcast.title} title={this.props.episode.Episode.title} image={this.props.episode.Podcast.artwork_url} />
+						<PlayerButton buttonText='Play' buttonAction={this.props.AudioPlayer.play} />
 	        </View>
 	        );
 			}
@@ -87,28 +72,95 @@ class Player extends React.Component {
   }
 }
 
+class EpisodeView extends React.Component {
+	render () {
+		return (
+			<View style={styles.episodeView}>
+				<Text style={styles.episodeTitle}>{this.props.podcastTitle}</Text>
+				<Text style={styles.playerText}>{this.props.title}</Text>
+					<Image
+						style={styles.image}
+						source={{uri: this.props.image}}
+						resizeMode='contain'
+					/>
+			</View>
+		);
+	}
+}
+
+class PlayerButton extends React.Component {
+	render() {
+		return (
+			<TouchableHighlight
+				underlayColor="#aaa"
+				activeOpacity={0.8}
+				onPress={() => this.props.buttonAction()}
+				style={[
+					 styles.button,
+					 this.props.buttonText == 'Play' && styles.playButton,
+					 this.props.buttonText == 'Pause' && styles.pauseButton,
+				 ]}
+			>
+				<Text style={[
+					 styles.buttonText,
+					 this.props.buttonText == 'Play' && styles.playButtonText,
+					 this.props.buttonText == 'Pause' && styles.pauseButtonText,
+				 ]}>{this.props.buttonText}</Text>
+			</TouchableHighlight>
+		);
+	}
+}
+
 var styles = StyleSheet.create({
   player: {
+		flex: 1,
     alignSelf: 'stretch',
-    padding: 10
+  	marginTop: 20,
+		marginBottom: 48
   },
+	episodeView: {
+		flex: 1,
+		alignSelf: 'stretch',
+		alignItems:'center',
+		justifyContent:'center',
+		flexDirection: 'column'
+	},
+	episodeTitle: {
+		textAlign: 'center',
+		color: '#333',
+		fontSize: 30,
+		fontWeight: '300',
+		padding: 10
+	},
   playerText: {
-		padding: 20,
     textAlign: 'center',
     color: '#333',
-    fontSize: 30,
+    fontSize: 18,
+		fontWeight: '300',
+		padding: 10
   },
+	image: {
+		flex: 1,
+		alignSelf: 'stretch'
+	},
 	button: {
-		padding:20,
+		padding:10,
+		margin: 10,
+		borderRadius: 4
+	},
+	buttonText: {
 		textAlign: 'center',
 		color: '#333',
 		fontSize: 30,
 	},
 	playButton: {
-		backgroundColor: '#009a49'
+		backgroundColor: '#666',
+	},
+	playButtonText: {
+		color: '#fff',
 	},
 	pauseButton: {
-		backgroundColor: '#eee'		
+		backgroundColor: '#eee'
 	}
 });
 

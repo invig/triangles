@@ -42,9 +42,9 @@ var UnplayedPodcasts = React.createClass({
         >
         <View>
         <EpisodeRow
-        imageUrl={rowData.image}
-        title={rowData.title}
-        episodeId={rowData.id} />
+        imageUrl={rowData.Podcast.artwork_url}
+        title={rowData.Episode.title}
+        episodeId={rowData.Episode.id} />
         </View>
         </TouchableHighlight>
         }
